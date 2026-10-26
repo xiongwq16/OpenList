@@ -144,6 +144,13 @@ func (d *QuarkOrUC) getTranscodingLink(file model.Obj) (*model.Link, error) {
 	}
 	var resp TranscodingResp
 	ua := d.conf.ua
+	if d.MobileRequestURL != "" {
+		resp, err := d.getMobileTranscodingLink(data)
+		if err != nil {
+			return nil, err
+		}
+		return transcodingVideoLink(resp)
+	}
 
 	_, err := d.request("/file/v2/play/project", http.MethodPost, func(req *resty.Request) {
 		req.SetHeader("User-Agent", ua).
@@ -152,7 +159,10 @@ func (d *QuarkOrUC) getTranscodingLink(file model.Obj) (*model.Link, error) {
 	if err != nil {
 		return nil, err
 	}
+	return transcodingVideoLink(resp)
+}
 
+func transcodingVideoLink(resp TranscodingResp) (*model.Link, error) {
 	for _, info := range resp.Data.VideoList {
 		if info.VideoInfo.URL != "" {
 			return &model.Link{
